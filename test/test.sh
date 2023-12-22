@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 NAME=build/pestilence
 LOGIN=rcabezas
 function echo_green(){
@@ -12,8 +11,6 @@ function echo_red(){
 function echo_blue(){
     echo -en "\e[94m""${@}""\033[0m" " "
 }
-
-
 
 function test_famine(){
     echo_blue Testing famine functionality
@@ -52,7 +49,9 @@ function test_ls(){
 
 function kill_test() {
 	local pids=$(ps -ef | tr -s " " | grep infinity | grep -v grep | cut -f2 -d' ')
-	echo $pids | tr ' ' "\n" | xargs kill
+	if [ $pids ]; then
+		echo $pids | tr ' ' "\n" | xargs kill
+	fi
 }
 
 function test_process_name(){
@@ -68,16 +67,10 @@ function test_process_name(){
 		echo_red KO
 	else
 		./${NAME}
-		strings /tmp/test/cp | grep $LOGIN >/dev/null 
-		if [ $? != 0 ]  ;then
-			echo_red KO
-			kill_test
-			return -1
-		fi
+		strings /tmp/test/cp | grep $LOGIN >/dev/null && echo_red KO && kill_test && return -1 || true
+		kill_test
 		./${NAME}
 		strings /tmp/test/cp | grep $LOGIN >/dev/null || echo_red KO
-
-
 	fi
 
 	kill_test

