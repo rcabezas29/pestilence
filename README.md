@@ -1,46 +1,99 @@
 # pestilence
 
-### Resources
+This project is the continuation of [famine](https://github.com/rcabezas29/famine). The purpose is to adding some hiding methods.
 
-- https://linux-audit.com/elf-binaries-on-linux-understanding-and-analysis/
-- https://www.symbolcrash.com/2019/03/27/pt_note-to-pt_load-injection-in-elf/
-- https://samples.vx-underground.org/root/Papers/Linux/Infection/2021-01-18%20-%20ELF%20Infection%20in%20Assembly%20x64%20-%20Midrashim%20virus.pdf
-- https://man7.org/linux/man-pages/man5/elf.5.html
-- https://blog.rchapman.org/posts/Linux_System_Call_Table_for_x86_64/
-- [PT_NOTE TO PT_LOAD](https://tmpout.sh/1/2.html)
-- https://medium.com/@tepes_alexandru/the-proc-directory-in-linux-63f278e962f1
-- https://defuse.ca/online-x86-assembler.htm#disassembly
+- Anti-Debugging
+- Specific process evader
+- Obfuscation
 
+### Anti-Debugging
 
-| 1st arg | 2nd arg| 3rd arg | 4th arg | 5th arg | 6th arg| 
-| -| -| -| -| -| - |
-| ``rdi``| ``rsi``| ``rdx`` | ``rcx`` | ``r8``| ``r9`` |  
+By calling the syscall `ptrace`, the virus can detect if it is being debugged as it is using this syscall. As this syscall can only be used once by process and the debuggers use it, it detects it and jumps to the end of the program doing nothing.
 
+### Specific process evader
 
+Every process running in Linux systems it present in the `/proc` folder. The virus look for a specific process name over all the processses folders and, if it finds that specific process name, exits the program doing nothing so that it can not be detected.
 
+### Obfuscation
 
+For obfuscation several techniques have been used. It is important that, in case someone analyzes the virus, he/she could not understand it easily. The program should work the same but the code must look like if it is doing other things.
 
-##### Ofuscacion (teoría 1)
+A lot of useless code has been added.
 
-rnd 7
-
-rnd 64
+Examples:
+```assembly
+nop		               ; useless instruction
 
 
-nop
-nop
-nop
-nop
-nop
-nop
-nop
+xor rax, 1
+xor rax, 1             ; XOR gates, if applied twice the same, do nothing
 
 
+mov rax, SYS_GETUID
+syscall                ; useless syscalls that do not alter the code
 
-mov r9 (325243562362462)
+
+_write_an_important_message:
+	mov rax, SYS_WRITE
+	mov rdi, 1
+	lea rsi, [r15]
+	mov rdx, 0
+	syscall            ; writes with len 0
 
 
-### packing
+xor rdi, rdi
+_important_loop:
+	inc rdi
+	mov rsi, 0xaf01
+	inc rdi
+	xor rax, rax
+	imul rax, rax, 1
+	dec rdi
+	add rdi, 4
+	nop
+	cmp rdi, 0x001001
+	jl _important_loop
+	imul rax, rax, 1   ; more useless functions
+```
 
-- cifrar
-- descrifrar
+#### Packing
+
+Another technique used for obfucation was *packing*. By a [XOR cipher](https://en.wikipedia.org/wiki/XOR_cipher), the code is injected encrypted. The first part of the program will apply the same XOR cipher so it will decrypt the code for its previous execution.
+
+This proceess makes the code to be crypted if anyone with any program wants to analyze it.
+
+## Usage
+
+As there is a `.devcontainer`, you can open the project with your VSCode with the appropiate extension and the Docker container will deploy automatically.
+
+Alternatively, you can deploy it the hard mode:
+
+```bash
+docker build -t pestilence .
+docker run -v $(pwd):/root/pestilence -it pestilence
+```
+
+Inside the container:
+
+```bash
+make && ./build/pestilence
+```
+
+If you want to see the syscalls and a simple test we have done:
+
+```bash
+make run
+```
+
+or to debug it:
+
+```bash
+make g
+```
+
+## Testing
+
+We have added some [testing](./test/test.sh). This can be executed with:
+```bash
+make test
+```
