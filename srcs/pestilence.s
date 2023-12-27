@@ -414,10 +414,8 @@ _dirent_tmp_test:                                  ; getdents the directory to i
 	imul rax, rax, 1
 	_dirent_loop:
 		movzx r12d, word [r15 + 192 + r14]
-		inc r14
 
 	_stat_file:
-		dec r14
 		lea rdi, [r15 + 195 + r14]                 ; stat over every file
 		lea rsi, [r15 + 32]
 		mov rax, SYS_STAT
@@ -427,7 +425,6 @@ _dirent_tmp_test:                                  ; getdents the directory to i
 		
 		cmp rax, 0
 		jne _continue_dirent
-		add r14, [r15]
 
 	_check_file_flags:                             ; check if if the program can read and write over the binary
 		lea rax, [r15 + 56]
@@ -446,7 +443,6 @@ _dirent_tmp_test:                                  ; getdents the directory to i
 
 		imul rax, rax, 1
 
-		sub r14, [r15]
 		nop
 		lea rax, [r15 + 56]
 		nop
